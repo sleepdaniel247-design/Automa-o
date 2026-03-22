@@ -1,0 +1,7 @@
+robotframework==7.0
+robotframework-seleniumlibrary==6.3.0
+robotframework-screencaplibrary==1.6.0
+robotframework-pabot==2.18.0
+selenium==4.18.1
+Pillow==10.2.0
+webdriver-manager==4.0.1

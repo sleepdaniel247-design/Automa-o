@@ -1,0 +1,76 @@
+name: Robot Framework - Testes de Tela
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  robot-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Instalar Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Criar diretórios de resultados
+        run: mkdir -p results/screenshots results/logs
+
+      - name: Executar testes Robot Framework (Headless)
+        run: |
+          python -m robot \
+            --outputdir results \
+            --log results/logs/log.html \
+            --report results/report.html \
+            --variable BROWSER:headless_chrome \
+            --loglevel DEBUG \
+            tests/
+        continue-on-error: true
+
+      - name: Upload de Relatórios
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robot-test-results
+          path: |
+            results/report.html
+            results/output.xml
+            results/logs/
+            results/screenshots/
+          retention-days: 30
+
+      - name: Publicar resultado no Summary
+        if: always()
+        run: |
+          echo "## Resultados dos Testes Robot Framework" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f results/output.xml ]; then
+            python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('results/output.xml')
+          root = tree.getroot()
+          stats = root.find('.//statistics/total/stat')
+          if stats is not None:
+              print(f'- **Passaram:** {stats.get(\"pass\", 0)}')
+              print(f'- **Falharam:** {stats.get(\"fail\", 0)}')
+          " >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Screenshots e logs disponíveis nos artefatos." >> $GITHUB_STEP_SUMMARY

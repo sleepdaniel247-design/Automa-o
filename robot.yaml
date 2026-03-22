@@ -1,0 +1,18 @@
+tasks:
+  Default:
+    command:
+      - python
+      - -m
+      - robot
+      - --outputdir
+      - results
+      - tests/
+
+condaConfigFile: conda.yaml
+artifactsDir: results
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+  - .gitignore
